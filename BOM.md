@@ -26,6 +26,29 @@ This document lists all hardware components required to build the OBD-II diagnos
 | RCA Cable | Composite video/audio cable | 1 | Connects Pi to head unit |
 | **OR** Small HDMI Display | 3.5" - 7" touchscreen | 1 | Alternative standalone display option |
 
+## Audio/Visual Diagnostics
+
+| Component | Description | Qty | Notes |
+|-----------|-------------|-----|-------|
+| USB Microphone | Omnidirectional condenser mic | 1 | For recording engine/cab noises for repair diagnostics |
+| **OR** USB Sound Card + 3.5mm Mic | External audio adapter | 1 | Alternative for better audio quality |
+| Raspberry Pi Camera Module | Pi Camera v2 or HQ Camera | 1 | Dashboard monitoring - captures warning lights and gauges |
+| **OR** USB Webcam | 1080p USB camera | 1 | Alternative camera option; wider compatibility |
+| Camera Mount/Bracket | Adjustable dashboard mount | 1 | Positions camera to view instrument cluster |
+| Camera Ribbon Cable (extended) | 1m or 2m CSI ribbon cable | 1 | For Pi Camera - allows flexible positioning |
+
+### Audio Diagnostics Use Cases
+- Record engine knocking, ticking, or unusual sounds
+- Capture belt squealing or grinding noises
+- Document exhaust sounds for emissions diagnostics
+- Record cab rattles and vibrations at different speeds
+
+### Visual Diagnostics Use Cases
+- Monitor dashboard warning lights (Check Engine, ABS, etc.)
+- Capture tachometer/speedometer readings for correlation with OBD-II data
+- Record gauge behavior during diagnostic tests
+- Document intermittent warning light issues
+
 ## Cables & Connectors
 
 | Component | Description | Qty | Notes |
@@ -59,16 +82,35 @@ For the simplest build, you need:
 3. **Micro USB Car Charger** (2A)
 4. **Display** (HDMI screen or head unit with RCA)
 
+## Enhanced Diagnostics Configuration
+
+For full audio/visual diagnostics capabilities, add:
+
+1. **USB Microphone** - Engine and cab noise recording
+2. **Pi Camera Module** + Mount - Dashboard/gauge monitoring
+3. **Larger MicroSD Card** (32GB+) - Storage for audio/video recordings
+4. **USB Hub** (powered, optional) - If using multiple USB devices
+
 ## Wiring Diagram
 
 ```
-┌─────────────────┐     Bluetooth      ┌──────────────────┐
-│   Raspberry Pi  │ <----------------> │  ELM327 Adapter  │
-│                 │                    │                  │
-│  HDMI/RCA Out ──┼───> Display        │   OBD-II Plug ───┼───> Vehicle Port
-│                 │                    │                  │
-│  Micro USB ─────┼───> 12V Car Power  └──────────────────┘
-└─────────────────┘
+                                        ┌──────────────────┐
+                        Bluetooth       │  ELM327 Adapter  │
+                    <-----------------> │   OBD-II Plug ───┼───> Vehicle Port
+                    │                   └──────────────────┘
+┌───────────────────┴───┐
+│     Raspberry Pi      │
+│                       │               ┌──────────────────┐
+│  CSI Port ────────────┼──────────────>│  Pi Camera       │───> Dashboard View
+│                       │               └──────────────────┘
+│  USB Port 1 ──────────┼──────────────> USB Microphone ───> Engine/Cab Audio
+│                       │
+│  USB Port 2 ──────────┼──────────────> Bluetooth Adapter (if needed)
+│                       │
+│  HDMI/RCA Out ────────┼──────────────> Display
+│                       │
+│  Power (USB-C/Micro) ─┼──────────────> 12V Car Power
+└───────────────────────┘
 ```
 
 ## Sensors Monitored (via OBD-II)
