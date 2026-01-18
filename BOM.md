@@ -9,249 +9,446 @@ This design incorporates findings from peer-reviewed research on vehicle diagnos
 - **Audio-based fault detection** using MFCC (Mel-Frequency Cepstral Coefficients) analysis can achieve 92%+ accuracy in identifying engine faults
 - **Computer vision** enables automated dashboard warning light detection and gauge reading
 - **Multi-source sensor fusion** combining OBD-II data with GPS, accelerometer, and audio/video significantly improves diagnostic accuracy
+- **Edge AI acceleration** enables real-time ML inference for immediate fault detection
 
-## Core Components
+---
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| Raspberry Pi 4 Model B | 4GB or 8GB RAM recommended | 1 | Required for ML inference; handles audio/video processing |
-| MicroSD Card | 64GB or larger, Class 10/U3 | 1 | Larger capacity for audio/video storage and ML models |
-| ELM327 Bluetooth Adapter | OBD-II to Bluetooth interface (v1.5 or v2.1) | 1 | Communicates with vehicle ECU at 38400 baud |
-| Plugable USB Bluetooth 4.0 Adapter | Low Energy Micro Adapter | 1 | Optional - Pi 4 has built-in Bluetooth |
+## Compute Platform Options
 
-## Power Supply
+### Option A: Raspberry Pi 4 (DIY/Budget)
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| USB-C Car Charger | 5V 3A minimum for Pi 4 | 1 | Must provide stable power for compute-intensive tasks |
-| **OR** 12V to 5V Buck Converter | 3A+ output with USB-C | 1 | More reliable than cheap car chargers |
-| UPS HAT (optional) | Uninterruptible power supply | 1 | Prevents SD card corruption on power loss |
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Raspberry Pi 4 Model B | 4GB or 8GB RAM | $55-75 | Required for ML inference |
+| MicroSD Card | 64GB+ Class 10/U3 (Samsung EVO, SanDisk Extreme) | $12-20 | High endurance recommended |
+| Coral USB Accelerator | Google Edge TPU (4 TOPS) | $60 | 6-7x faster ML inference than Pi alone |
 
-## Display & Audio Output
+### Option B: NVIDIA Jetson Nano (Performance)
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| 7" HDMI Touchscreen | 1024x600 or higher resolution | 1 | Recommended for displaying diagnostic data |
-| **OR** Aftermarket Head Unit | Car stereo with AUX input | 1 | Receives audio/video from Raspberry Pi |
-| RCA Cable | Composite video/audio cable | 1 | For head unit connection |
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Jetson Nano Developer Kit | 4GB, 472 GFLOPS GPU | $150 | Best for real-time video + audio ML |
+| MicroSD Card | 128GB+ U3/A2 | $20-30 | Faster I/O for ML models |
+| Jetson Nano Case | With fan and heatsink | $15-25 | Required - runs hot under load |
+
+### Option C: AutoPi TMU CM4 (Commercial/Turnkey)
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| AutoPi TMU CM4 | Vehicle-grade Pi CM4 platform | $300-400 | Built-in CAN-FD, GPS, IMU, cellular |
+| AutoPi Cloud Subscription | Fleet management + OTA updates | $10-50/mo | Optional but recommended |
+
+**Recommendation**: Raspberry Pi 4 + Coral USB for best cost/performance. Jetson Nano for advanced real-time video processing. AutoPi for commercial deployments.
+
+---
+
+## Automotive Environment Protection
+
+Vehicle electronics must withstand harsh conditions. Standard consumer electronics will fail prematurely without proper protection.
+
+### Environmental Specifications
+
+| Parameter | Requirement | Notes |
+|-----------|-------------|-------|
+| Operating Temperature | -20°C to +70°C | Vehicles can exceed 85°C in summer sun |
+| Storage Temperature | -40°C to +85°C | Parked vehicle extremes |
+| Vibration Resistance | Up to 3g continuous | Normal driving conditions |
+| Shock Resistance | Up to 20g occasional | Potholes, speed bumps |
+| EMI Immunity | CISPR25 Class 5 | Automotive EMC standard |
+
+### Enclosure & Mounting
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Aluminum Enclosure | IP65 rated, 150x100x50mm | $25-40 | Heat dissipation + EMI shielding |
+| Vibration Isolation Mounts | M3 rubber grommets/standoffs | $5-10 | Reduces shock to electronics |
+| Thermal Pad/Paste | Silicone thermal interface | $5-10 | CPU to enclosure heat transfer |
+| EMI Gasket Kit | Conductive foam tape | $10-15 | Seals enclosure gaps |
+| **OR** SmartiPi Touch 2 Case | Pi case with HAT space | $30 | Good for prototyping |
+
+### Power Conditioning (Critical)
+
+Vehicle 12V power is extremely noisy with load dumps, crank drops, and transients. Poor power causes corruption and failures.
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Automotive DC-DC Converter | 12V to 5V/3A, ISO 7637 rated | $25-40 | Must handle 6-36V input range |
+| **OR** MoPower UPS v2 | Pi UPS HAT with supercapacitors | $50 | Clean shutdown on power loss |
+| **OR** PiJuice HAT | UPS with 12V input option | $60 | Battery backup for data integrity |
+| TVS Diode Array | Automotive transient protection | $5-10 | Protection from load dumps |
+| LC Filter Module | EMI/RFI noise filter | $10-15 | Reduces power line noise |
+
+**Warning**: Do not use cheap USB car chargers. They lack proper filtering and voltage regulation for sensitive electronics.
+
+---
 
 ## Audio Diagnostics (Research-Optimized)
 
-Based on research showing MFCC-based sound analysis achieves 92%+ fault detection accuracy:
+Based on research showing MFCC-based sound analysis achieves 92%+ fault detection accuracy.
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| USB Condenser Microphone | 44.1kHz+ sample rate, <20dB noise floor | 1 | Required for MFCC feature extraction |
-| **OR** USB Audio Interface | 24-bit/48kHz ADC (e.g., Focusrite Scarlett Solo) | 1 | Professional-grade for best results |
-| Lavalier/Clip Microphone | 3.5mm with extension cable | 1 | For USB audio interface; position near engine |
-| Windscreen/Pop Filter | Foam cover for microphone | 1 | Reduces wind noise at speed |
-| Microphone Extension Cable | 3-5m shielded audio cable | 1 | Route mic to engine bay or wheel wells |
+### MEMS Digital Microphones (Recommended)
+
+I2S digital microphones eliminate analog noise and provide cleaner signals for ML analysis.
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Adafruit ICS-43434 Breakout | I2S MEMS mic, 50Hz-15kHz | $7 | Digital output, no ADC needed |
+| **OR** SPH0645LM4H Breakout | I2S MEMS mic, wide availability | $8 | Popular, well-documented |
+| **OR** INMP441 Module | I2S MEMS, multiple sources | $3-5 | Budget option, good quality |
+
+### USB Audio (Alternative)
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| USB Condenser Microphone | 44.1kHz+, <20dB noise floor | $20-50 | Plug-and-play simplicity |
+| **OR** USB Audio Interface | 24-bit/48kHz (Focusrite Scarlett Solo) | $100-150 | Professional-grade |
+| Lavalier/Clip Microphone | 3.5mm with extension | $15-25 | Position near engine |
+
+### Audio Accessories
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Windscreen/Pop Filter | Foam cover | $3-5 | Reduces wind noise |
+| Shielded Audio Cable | 3-5m extension | $10-15 | Route to engine bay |
+| Weatherproof Mic Housing | 3D printed or aluminum | $10-20 | Protect mic in engine bay |
 
 ### Audio Specifications (Research-Based)
-- **Sample Rate**: Minimum 44.1kHz (48kHz recommended) for accurate frequency analysis
-- **Bit Depth**: 16-bit minimum, 24-bit preferred
-- **Frequency Response**: 20Hz - 20kHz to capture full engine sound spectrum
-- **SNR**: >60dB for clean recordings in noisy vehicle environment
+
+| Parameter | Requirement | Reason |
+|-----------|-------------|--------|
+| Sample Rate | 44.1kHz minimum (48kHz preferred) | MFCC frequency resolution |
+| Bit Depth | 16-bit minimum, 24-bit preferred | Dynamic range for engine noise |
+| Frequency Response | 20Hz - 20kHz | Full engine sound spectrum |
+| SNR | >60dB | Clean recordings in noisy environment |
 
 ### Detectable Faults via Sound Analysis
-- Engine knocking/pinging (detonation)
-- Valve train noise (lifter tick, rocker arm clatter)
-- Belt squealing (serpentine, timing)
-- Bearing wear (alternator, water pump, wheel bearings)
-- Exhaust leaks and muffler issues
-- Brake pad wear indicators
-- CV joint clicking
-- Suspension component wear
+
+| Fault Type | Sound Characteristic | Detection Method |
+|------------|---------------------|------------------|
+| Engine knock/ping | Metallic rattling at load | Frequency spike at combustion |
+| Valve train noise | Ticking at idle | Rhythmic pattern analysis |
+| Belt squeal | High-pitched squeal at startup | High-frequency detection |
+| Bearing wear | Grinding, humming | Continuous noise floor change |
+| Exhaust leak | Popping, hissing | Irregular low-frequency bursts |
+| CV joint | Clicking on turns | Pattern correlated with steering |
+
+---
 
 ## Visual Diagnostics (Computer Vision)
 
-Based on research in automated dashboard warning light detection:
+Based on research in automated dashboard warning light detection.
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| Raspberry Pi Camera Module 3 | 12MP, HDR, low-light capable | 1 | Best for dashboard in varying light conditions |
-| **OR** Pi HQ Camera | 12.3MP with C/CS mount | 1 | Higher quality; requires separate lens |
-| **OR** USB Webcam | 1080p, low-light capable (e.g., Logitech C920) | 1 | Wider compatibility; good low-light performance |
-| Wide-Angle Lens | 120°+ FOV (for HQ Camera) | 1 | Captures full dashboard in tight spaces |
-| Camera Gooseneck Mount | Flexible 30-50cm arm | 1 | Adjustable positioning for dashboard view |
-| IR LED Ring (optional) | 850nm infrared illuminator | 1 | For night driving dashboard visibility |
-| CSI Ribbon Cable (extended) | 1m or 2m length | 1 | Flexible camera positioning |
+### Camera Options
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Raspberry Pi Camera Module 3 | 12MP, HDR, low-light | $25-35 | Best balance for dashboard |
+| Pi Camera Module 3 NoIR | 12MP, no IR filter | $25-35 | Better low-light with IR LEDs |
+| **OR** Pi HQ Camera | 12.3MP, C/CS mount | $50-60 | Higher quality, needs lens |
+| **OR** Logitech C920 USB | 1080p, good low-light | $70-90 | Wider compatibility |
+| **OR** ELP USB Camera | 1080p, wide-angle, low-light | $30-50 | Budget USB option |
+
+### Camera Accessories
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Wide-Angle Lens (6mm) | 60° FOV for HQ Camera | $25-40 | Full dashboard in tight space |
+| Gooseneck Mount | Flexible 30-50cm arm | $10-20 | Adjustable positioning |
+| IR LED Ring | 850nm, 12V automotive | $10-15 | Night dashboard illumination |
+| CSI Ribbon Cable | 1m or 2m length | $5-10 | Flexible positioning |
+| Polarizing Filter | Reduces glare/reflections | $10-15 | Improves gauge readability |
 
 ### Camera Specifications (Research-Based)
-- **Resolution**: Minimum 1080p for reading small warning light icons
-- **Low-Light Performance**: Essential for nighttime dashboard monitoring
-- **Frame Rate**: 30fps minimum for capturing intermittent warning lights
-- **Dynamic Range**: HDR preferred to handle bright sunlight and dark cabin
+
+| Parameter | Requirement | Reason |
+|-----------|-------------|--------|
+| Resolution | 1080p minimum | Read small warning icons |
+| Low-Light | <1 lux sensitivity | Nighttime dashboard |
+| Frame Rate | 30fps minimum | Catch intermittent lights |
+| Dynamic Range | HDR preferred | Sunlight + dark cabin |
 
 ### Detectable via Computer Vision
-- Dashboard warning light states (on/off/flashing)
+
+- Dashboard warning light states (on/off/flashing patterns)
 - Gauge readings (tachometer, speedometer, fuel, temperature)
-- Check engine light patterns
+- Check engine light behavior
 - ABS, airbag, battery, oil pressure indicators
 - Correlation of visual gauge data with OBD-II readings
 
+---
+
 ## Sensor Fusion (Enhanced Diagnostics)
 
-Research shows multi-source data fusion significantly improves diagnostic accuracy:
+Research shows multi-source data fusion significantly improves diagnostic accuracy.
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| GPS Module | u-blox NEO-6M or NEO-M8N | 1 | Vehicle location, speed verification, route logging |
-| IMU (Accelerometer/Gyroscope) | MPU-6050 or MPU-9250 | 1 | Detect vibrations, vehicle dynamics, road conditions |
-| GPS + IMU HAT | Combines both sensors | 1 | Cleaner installation than separate modules |
-| OBD-II Splitter Cable | Y-adapter for OBD port | 1 | Share port with other devices if needed |
+### Navigation & Motion Sensors
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| u-blox NEO-M8N GPS | 10Hz update, 2.5m accuracy | $15-25 | Speed verification, route logging |
+| **OR** u-blox NEO-M9N GPS | Newer, better urban performance | $30-40 | Better multipath rejection |
+| BerryGPS-IMU v4 | GPS + IMU HAT for Pi | $60-80 | Integrated solution |
+
+### Inertial Measurement (IMU)
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| MPU-6050 | 6-axis accel/gyro, I2C | $3-5 | Budget, well-documented |
+| MPU-9250 | 9-axis with magnetometer | $8-12 | Adds compass heading |
+| **OR** ICM-20948 | 9-axis, newer, lower noise | $12-18 | Better vibration sensing |
+| **OR** ADXL345 | 3-axis accelerometer only | $5-8 | Simple vibration detection |
 
 ### Sensor Fusion Benefits
-- **GPS + OBD-II**: Verify speedometer accuracy, log routes with engine data
-- **IMU + Audio**: Correlate vibrations with sounds for bearing/suspension diagnosis
-- **All sensors**: Comprehensive vehicle health profile with location context
+
+| Combination | Diagnostic Capability |
+|-------------|----------------------|
+| GPS + OBD-II | Verify speedometer accuracy, geo-tagged diagnostics |
+| IMU + Audio | Correlate vibrations with sounds (bearing diagnosis) |
+| IMU + OBD-II | Detect misfires, rough idle via vibration |
+| Camera + OBD-II | Validate gauge readings vs ECU data |
+| All Sensors | Comprehensive vehicle health profile |
+
+---
+
+## OBD-II Interface
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| ELM327 Bluetooth v2.1 | Wireless OBD-II adapter | $15-30 | Get genuine chip, not clone |
+| **OR** OBDLink MX+ | Professional-grade Bluetooth | $100 | Faster, more reliable |
+| **OR** OBDLink SX USB | Wired USB connection | $30 | More stable than Bluetooth |
+| **OR** Carloop | Open-source CAN adapter | $80 | Direct CAN access, faster |
+| SAE J1962 Extension Cable | 1m OBD-II extension | $10-15 | Easier access to port |
+| OBD-II Splitter Cable | Y-adapter | $10-15 | Share port with other devices |
+
+---
 
 ## Cables & Connectors
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| SAE J1962 Extension Cable | 1m OBD-II extension | 1 | For easier access to OBD-II port |
-| USB Hub (powered) | 4+ port, 5V/3A powered | 1 | Required for multiple USB peripherals |
-| USB Extension Cables | 1-2m lengths | 2-3 | Route microphone and other USB devices |
-| Cable Management Kit | Velcro ties, cable clips | 1 | Clean installation in vehicle |
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| USB Hub (powered) | 4+ port, 5V/3A | $15-25 | Required for multiple peripherals |
+| USB Extension Cables | 1-2m lengths | $5-10 ea | Route to sensors |
+| Cable Management Kit | Velcro, clips, loom | $10-15 | Clean installation |
+| Waterproof Connectors | IP67 M12 or automotive | $10-20 | For engine bay sensors |
+| Shielded USB Cables | Ferrite cores, braided | $10-15 | Reduce EMI pickup |
+
+---
+
+## Display Options
+
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| 7" Official Pi Touchscreen | 800x480, DSI | $70 | Plug-and-play |
+| 7" HDMI Touchscreen | 1024x600 IPS | $50-70 | Higher resolution |
+| **OR** 5" HDMI Touchscreen | 800x480, compact | $35-50 | Space-constrained installs |
+| **OR** Existing Head Unit | Via RCA composite | $5-10 | Use car stereo display |
+| Anti-Glare Screen Protector | Matte film | $5-10 | Reduce sun glare |
+| Display Mount | RAM mount or custom | $20-40 | Secure dashboard mounting |
+
+---
 
 ## Optional Accessories
 
-| Component | Description | Qty | Notes |
-|-----------|-------------|-----|-------|
-| Raspberry Pi Case | With cooling fan | 1 | Essential for Pi 4 thermal management |
-| Heatsinks | Copper heatsink kit | 1 | Additional cooling for ML workloads |
-| USB Keyboard/Mouse | Wireless combo | 1 | For initial setup and debugging |
-| Real-Time Clock (RTC) | DS3231 module | 1 | Accurate timestamps without network |
-| External SSD | USB 3.0, 256GB+ | 1 | Faster storage for large recordings |
+| Component | Description | Est. Cost | Notes |
+|-----------|-------------|-----------|-------|
+| Real-Time Clock (RTC) | DS3231 module | $5-10 | Accurate timestamps offline |
+| External SSD | USB 3.0, 256GB+ | $30-50 | Faster than SD for recordings |
+| WiFi Antenna (external) | RP-SMA extension | $10-15 | Better range for data upload |
+| 4G/LTE Modem | USB cellular modem | $50-100 | Remote data upload |
+| Bluetooth OBD + GPS Combo | All-in-one adapter | $50-80 | Simplified wiring |
 
-## Vehicle Requirements
+---
 
-| Requirement | Description |
-|-------------|-------------|
-| OBD-II Port | SAE J1962 16-pin diagnostic connector |
-| Vehicle Year | 1996 or newer (US) - OBD-II compliant |
-| Port Location | Within 2 feet of steering wheel |
+## Configuration Tiers with Estimated Costs
 
-## Configuration Tiers
+### Tier 1: Basic OBD-II Diagnostics (~$150-200)
 
-### Tier 1: Basic OBD-II Diagnostics
-Minimum build for reading vehicle codes and sensor data:
-1. Raspberry Pi 4 (2GB) + 32GB MicroSD
-2. ELM327 Bluetooth Adapter
-3. USB-C Car Charger (3A)
-4. Small HDMI Display
+| Component | Est. Cost |
+|-----------|-----------|
+| Raspberry Pi 4 (4GB) | $55 |
+| 32GB MicroSD | $10 |
+| ELM327 Bluetooth v2.1 | $20 |
+| Automotive DC-DC Converter | $30 |
+| 5" HDMI Touchscreen | $40 |
+| Basic Case | $15 |
+| **Total** | **~$170** |
 
-### Tier 2: Audio Diagnostics
-Add sound-based fault detection:
-1. All Tier 1 components
-2. USB Condenser Microphone (44.1kHz+)
-3. Microphone windscreen
-4. 64GB MicroSD (for recordings)
+### Tier 2: Audio Diagnostics (~$220-280)
 
-### Tier 3: Visual Diagnostics
-Add computer vision for dashboard monitoring:
-1. All Tier 2 components
-2. Pi Camera Module 3 or USB Webcam
-3. Gooseneck camera mount
-4. Extended CSI cable (if using Pi Camera)
+| Component | Est. Cost |
+|-----------|-----------|
+| All Tier 1 components | $170 |
+| INMP441 I2S MEMS Microphone | $5 |
+| Windscreen + shielded cable | $15 |
+| 64GB MicroSD upgrade | +$5 |
+| **Total** | **~$195** |
 
-### Tier 4: Full Sensor Fusion (Recommended)
-Complete diagnostic system with research-backed accuracy:
-1. All Tier 3 components
-2. GPS Module (u-blox)
-3. IMU Sensor (MPU-6050/9250)
-4. USB Audio Interface (for professional audio)
-5. 128GB+ MicroSD or External SSD
-6. Powered USB Hub
-7. UPS HAT (for data integrity)
+### Tier 3: Visual Diagnostics (~$280-350)
+
+| Component | Est. Cost |
+|-----------|-----------|
+| All Tier 2 components | $195 |
+| Pi Camera Module 3 | $30 |
+| Gooseneck mount | $15 |
+| IR LED ring | $12 |
+| Extended CSI cable | $8 |
+| **Total** | **~$260** |
+
+### Tier 4: Full Sensor Fusion (~$400-500)
+
+| Component | Est. Cost |
+|-----------|-----------|
+| All Tier 3 components | $260 |
+| Coral USB Accelerator | $60 |
+| u-blox NEO-M8N GPS | $20 |
+| MPU-9250 IMU | $10 |
+| Powered USB Hub | $20 |
+| UPS HAT | $50 |
+| Aluminum enclosure + mounts | $40 |
+| **Total** | **~$460** |
+
+### Tier 5: Professional Grade (~$600-800)
+
+| Component | Est. Cost |
+|-----------|-----------|
+| Jetson Nano 4GB | $150 |
+| 128GB High-Endurance SD | $25 |
+| OBDLink MX+ | $100 |
+| USB Audio Interface + Lavalier | $120 |
+| Pi HQ Camera + Lens | $90 |
+| BerryGPS-IMU v4 | $70 |
+| Automotive enclosure + power | $80 |
+| 7" IPS Touchscreen | $60 |
+| **Total** | **~$695** |
+
+---
 
 ## Wiring Diagram
 
 ```
-                                              ┌──────────────────┐
-                          Bluetooth           │  ELM327 Adapter  │
-                      <-------------------->  │   OBD-II Plug ───┼───> Vehicle Port
-                      │                       └──────────────────┘
-┌─────────────────────┴─────┐
-│       Raspberry Pi 4      │
-│                           │                 ┌──────────────────┐
-│  CSI Port ────────────────┼────────────────>│  Pi Camera       │───> Dashboard View
-│                           │                 └──────────────────┘
-│  GPIO (I2C) ──────────────┼────────────────> GPS + IMU Module
-│                           │
-│         ┌─────────────────┼────────────────> Powered USB Hub
-│  USB ───┤                 │                       │
-│         └─────────────────┤                       ├──> USB Microphone ───> Engine Bay
-│                           │                       ├──> USB Webcam (alt)
-│                           │                       └──> External SSD
-│                           │
-│  HDMI ────────────────────┼────────────────> 7" Touchscreen Display
-│                           │
-│  USB-C Power ─────────────┼────────────────> 12V Car Power (via buck converter)
-│                           │
-│  UPS HAT ─────────────────┼────────────────> Battery Backup
-└───────────────────────────┘
+                                                    ┌──────────────────┐
+                            Bluetooth               │  ELM327 Adapter  │
+                        <------------------------>  │   OBD-II Plug ───┼───> Vehicle Port
+                        │                           └──────────────────┘
+┌───────────────────────┴───────┐
+│     Raspberry Pi 4 / Jetson   │
+│                               │
+│  CSI ─────────────────────────┼──────> Pi Camera ──────> Dashboard View
+│                               │
+│  I2S (GPIO) ──────────────────┼──────> MEMS Microphone ──> Engine Bay
+│                               │
+│  I2C (GPIO) ──────────────────┼──────> GPS + IMU Module
+│                               │
+│  USB ─────────────────────────┼──────> Coral TPU (ML Accelerator)
+│         │                     │
+│         └─────────────────────┼──────> Powered USB Hub
+│                               │              │
+│                               │              ├──> External SSD
+│                               │              ├──> USB Audio (alt)
+│                               │              └──> 4G Modem (opt)
+│                               │
+│  HDMI ────────────────────────┼──────> 7" Touchscreen Display
+│                               │
+│  USB-C Power ─────────────────┼──────> Automotive DC-DC Converter
+│                               │              │
+│                               │              └──> 12V Vehicle Power
+│  UPS HAT ─────────────────────┼──────> Supercapacitor/Battery Backup
+└───────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                        ENCLOSURE                                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │
+│  │ Vibration   │  │   EMI       │  │  Thermal    │                  │
+│  │ Isolation   │  │  Shielding  │  │   Pad       │                  │
+│  │  Mounts     │  │   Gasket    │  │ (to case)   │                  │
+│  └─────────────┘  └─────────────┘  └─────────────┘                  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+---
 
 ## Software Requirements
 
-For full functionality, the following software components are recommended:
+| Software | Purpose | Install |
+|----------|---------|---------|
+| Python 3.9+ | Core runtime | Pre-installed |
+| python-OBD | OBD-II communication | `pip install obd` |
+| librosa | Audio MFCC extraction | `pip install librosa` |
+| scipy | Signal processing | `pip install scipy` |
+| OpenCV | Computer vision | `pip install opencv-python` |
+| TensorFlow Lite | ML inference | `pip install tflite-runtime` |
+| gpsd + gps3 | GPS data processing | `apt install gpsd` |
+| pycoral | Coral TPU support | See Coral docs |
 
-| Software | Purpose |
-|----------|---------|
-| Python 3.9+ | Core application runtime |
-| pyOBD / python-OBD | OBD-II communication |
-| librosa / scipy | Audio analysis (MFCC extraction) |
-| OpenCV | Computer vision for dashboard detection |
-| TensorFlow Lite | ML inference for fault classification |
-| gpsd | GPS data processing |
+---
 
 ## Sensors Monitored (via OBD-II)
 
-The device reads the following sensors from your vehicle's ECU:
+| Category | Parameters |
+|----------|------------|
+| **Engine** | RPM, Load, Timing Advance, Runtime |
+| **Speed** | Vehicle Speed (km/h, MPH) |
+| **Temperature** | Coolant Temp, Intake Air Temp, Catalyst Temp |
+| **Fuel System** | Short/Long Term Fuel Trim, Fuel Pressure, Fuel Level |
+| **Air System** | MAF, MAP, Throttle Position |
+| **Oxygen Sensors** | Bank 1 & 2, Sensors 1-4 |
+| **Diagnostics** | DTCs, Freeze Frame, MIL Status |
 
-- **Engine**: RPM, Load, Timing Advance
-- **Speed**: Vehicle Speed (MPH/km/h)
-- **Temperature**: Coolant Temp, Intake Air Temp
-- **Fuel System**: Fuel Trim (Short/Long Term), Fuel Rail Pressure
-- **Air System**: Mass Air Flow (MAF), Intake Manifold Pressure
-- **Oxygen Sensors**: Bank 1 & 2, Sensors 1-4
-- **Diagnostics**: Trouble Codes (DTCs), MIL Status
+---
 
 ## Research References
 
-This design is informed by the following peer-reviewed research:
-
 1. **Engine Fault Detection by Sound Analysis and Machine Learning** (2024) - MDPI Applied Sciences
-   - Demonstrates 92%+ accuracy using MFCC features with ELM classifier
+   - 92%+ accuracy using MFCC features with ELM classifier
    - https://www.mdpi.com/2076-3417/14/15/6532
 
 2. **Intelligent Sound-Based Early Fault Detection System for Vehicles** (2023) - Tech Science Press
-   - Validates smartphone/microphone-based engine fault detection
+   - Smartphone/microphone-based engine fault detection
    - https://www.techscience.com/csse/v46n3/52169/html
 
 3. **OBD-II-Based Machine Learning Applications Review** (2025) - MDPI Sensors
-   - Comprehensive review of ML applications with OBD-II data
+   - Comprehensive review of ML with OBD-II data
    - https://www.mdpi.com/1424-8220/25/13/4057
 
-4. **Diagnostics Vehicle's Condition Using OBD-II and Raspberry Pi** - ResearchGate
-   - Foundational study on Pi-based OBD-II diagnostics
-   - https://www.researchgate.net/publication/323803679
+4. **Edge AI Accelerators: Jetson vs Coral TPU** - ThinkRobotics
+   - Performance comparison for edge inference
+   - https://thinkrobotics.com/blogs/learn/edge-ai-accelerators-jetson-vs-coral-tpu
 
-5. **Computer Vision Application in Automobile Error Detection** - IEEE Xplore
-   - Dashboard image analysis for fault detection
-   - https://ieeexplore.ieee.org/document/9791543/
+5. **AutoPi TMU CM4 Platform** - AutoPi.io
+   - Commercial vehicle-grade Raspberry Pi platform
+   - https://www.autopi.io/hardware/autopi-tmu-cm4/
 
-6. **TrackSide Pi** - Cornell ECE
-   - Reference implementation combining OBD-II, camera, GPS, and accelerometer
-   - https://courses.ece.cornell.edu/ece5990/ECE5725_Spring2020_Projects/
+6. **EMI Shielding for Automotive Applications** - K.R. Anderson
+   - Automotive EMC considerations
+   - https://krafab.com/emi-shielding-for-automotive-applications/
+
+7. **Adafruit I2S MEMS Microphone (ICS-43434)**
+   - Digital microphone for audio ML
+   - https://www.adafruit.com/product/6049
+
+---
+
+## Sourcing Recommendations
+
+| Component Category | Recommended Vendors |
+|-------------------|---------------------|
+| Raspberry Pi / Compute | Adafruit, SparkFun, The Pi Hut, Digi-Key |
+| Cameras / Sensors | Adafruit, SparkFun, ArduCam |
+| OBD-II Adapters | OBDLink (genuine), Amazon (verify reviews) |
+| Automotive Power | Digi-Key, Mouser, Amazon |
+| Enclosures | Hammond, Polycase, AliExpress |
+| Edge AI (Coral) | Coral.ai, Mouser, Digi-Key |
+
+---
 
 ## Notes
 
-- The ELM327 adapter must be paired with the Raspberry Pi's Bluetooth before use
-- Serial communication runs at **38400 baud** (8N1)
+- **ELM327 Warning**: Many cheap ELM327 adapters use clone chips that are unreliable. Buy from reputable sources or use OBDLink products.
+- Serial communication: **38400 baud** (8N1)
 - Device paths: `/dev/rfcomm0` (Bluetooth) or `/dev/ttyUSB0` (USB)
-- Logs are saved to `~/pyobd-pi/log/` in CSV format
-- For ML inference, Pi 4 with 4GB+ RAM is strongly recommended
-- Audio recordings should be in WAV format (uncompressed) for MFCC analysis
+- Logs saved to: `~/pyobd-pi/log/` in CSV format
+- For ML inference: Pi 4 with 4GB+ RAM or Coral TPU strongly recommended
+- Audio format: WAV (uncompressed) for MFCC analysis
+- Operating temperature: Test system in hot/cold conditions before permanent install
+- Power: Always use automotive-rated DC-DC converters with proper filtering
